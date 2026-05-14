@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+@layer base {
+  :root {
+    --background: 45 30% 97%;
+    --foreground: 30 15% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 15% 15%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 50% 92%;
+    --secondary-foreground: 30 20% 25%;
+    --muted: 45 20% 94%;
+    --muted-foreground: 30 10% 50%;
+    --accent: 38 80% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 20% 88%;
+    --input: 30 20% 88%;
+    --ring: 142 76% 36%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222 18% 10%;
+    --foreground: 210 20% 90%;
+    --card: 222 18% 13%;
+    --card-foreground: 210 20% 90%;
+    --popover: 222 18% 13%;
+    --popover-foreground: 210 20% 90%;
+    --primary: 142 70% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 15% 22%;
+    --secondary-foreground: 210 20% 85%;
+    --muted: 222 15% 17%;
+    --muted-foreground: 210 15% 58%;
+    --accent: 38 80% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 15% 28%;
+    --input: 222 15% 28%;
+    --ring: 142 70% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'Poppins', system-ui, sans-serif;
+  }
+}
