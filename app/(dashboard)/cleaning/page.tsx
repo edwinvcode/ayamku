@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDateShort } from "@/lib/utils";
 import { CleaningForm } from "@/components/cleaning/cleaning-form";
 import { MarkDoneButton } from "@/components/cleaning/mark-done-button";
-import { deleteCleaningLog } from "@/lib/actions/cleaning";
-import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
+import { DeleteCleaningLogButton } from "@/components/cleaning/delete-cleaning-log-button";
 
 export default async function CleaningPage() {
   const supabase = createClient();
@@ -63,10 +62,7 @@ export default async function CleaningPage() {
                         {log.status === "pending" && (
                           <MarkDoneButton id={log.id} cageArea={log.cage_area} />
                         )}
-                        <ConfirmDeleteButton
-                          onConfirm={deleteCleaningLog.bind(null, log.id)}
-                          description="Log kebersihan ini akan dihapus permanen."
-                        />
+                        <DeleteCleaningLogButton id={log.id} />
                       </div>
                     </TableCell>
                   </TableRow>

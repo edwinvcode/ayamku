@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { EggStatusBadge } from "@/components/eggs/egg-status-badge";
 import { formatDate } from "@/lib/utils";
 import { StartIncubationForm } from "@/components/eggs/start-incubation-form";
 import { RecordHatchForm } from "@/components/eggs/record-hatch-form";
-import { markEggsFailed, deleteEggBatch } from "@/lib/actions/eggs";
-import { Button } from "@/components/ui/button";
-import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
+import { MarkEggsFailedButton } from "@/components/eggs/mark-eggs-failed-button";
+import { DeleteEggBatchButton } from "@/components/eggs/delete-egg-batch-button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -96,13 +96,7 @@ export default async function EggDetailPage({ params }: { params: { id: string }
           <CardContent className="space-y-4">
             <StartIncubationForm eggId={egg.id} maxQuantity={egg.quantity} />
             <div className="pt-2 border-t">
-              <ConfirmDeleteButton
-                onConfirm={deleteEggBatch.bind(null, egg.id)}
-                title="Hapus batch telur ini?"
-                description="Semua data batch ini akan dihapus permanen."
-                trigger="Hapus Batch Ini"
-                triggerClassName="text-destructive border border-destructive/40 hover:bg-destructive/10 hover:border-destructive h-8 px-3 text-sm rounded-md"
-              />
+              <DeleteEggBatchButton id={egg.id} />
             </div>
           </CardContent>
         </Card>
@@ -117,12 +111,7 @@ export default async function EggDetailPage({ params }: { params: { id: string }
           <CardContent className="space-y-4">
             <RecordHatchForm eggId={egg.id} maxQuantity={egg.quantity} />
             <div className="pt-2 border-t">
-              <form action={markEggsFailed.bind(null, egg.id) as any}>
-                <Button type="submit" variant="outline" size="sm"
-                  className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:border-destructive">
-                  Tandai Semua Gagal
-                </Button>
-              </form>
+              <MarkEggsFailedButton eggId={egg.id} />
             </div>
           </CardContent>
         </Card>

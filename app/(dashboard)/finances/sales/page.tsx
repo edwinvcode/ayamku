@@ -6,8 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDateShort } from "@/lib/utils";
 import { DateFilter } from "@/components/finances/date-filter";
-import { deleteSale } from "@/lib/actions/sales";
-import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
+import { DeleteSaleButton } from "@/components/finances/delete-sale-button";
 import Link from "next/link";
 import { Bird, Egg, Info } from "lucide-react";
 
@@ -156,10 +155,7 @@ export default async function SalesPage({
                         {formatCurrency(calcRevenue(sale))}
                       </TableCell>
                       <TableCell>
-                        <ConfirmDeleteButton
-                          onConfirm={deleteSale.bind(null, sale.id)}
-                          description="Data penjualan ini akan dihapus permanen."
-                        />
+                        <DeleteSaleButton id={sale.id} />
                       </TableCell>
                     </TableRow>
                   );

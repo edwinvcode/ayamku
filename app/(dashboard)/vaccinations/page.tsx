@@ -7,8 +7,7 @@ import { formatDateShort, getDaysDiff } from "@/lib/utils";
 import { Lightbulb, HeartPulse, Clock3, GlassWater, Droplets, Thermometer, Leaf } from "lucide-react";
 import { VaccinationForm } from "@/components/vaccinations/vaccination-form";
 import { EditVaccinationButton } from "@/components/vaccinations/edit-vaccination-button";
-import { deleteVaccination } from "@/lib/actions/vaccinations";
-import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
+import { DeleteVaccinationButton } from "@/components/vaccinations/delete-vaccination-button";
 
 export default async function VaccinationsPage() {
   const supabase = createClient();
@@ -102,10 +101,7 @@ export default async function VaccinationsPage() {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <EditVaccinationButton vaccination={vacc} batches={batches || []} />
-                              <ConfirmDeleteButton
-                                onConfirm={deleteVaccination.bind(null, vacc.id)}
-                                description="Data vaksinasi ini akan dihapus permanen."
-                              />
+                              <DeleteVaccinationButton id={vacc.id} />
                             </div>
                           </TableCell>
                         </TableRow>

@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDateShort } from "@/lib/utils";
 import { ExpenseForm } from "@/components/finances/expense-form";
 import { DateFilter } from "@/components/finances/date-filter";
-import { deleteExpense } from "@/lib/actions/expenses";
-import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
+import { DeleteExpenseButton } from "@/components/finances/delete-expense-button";
 
 function getDateRange(month?: string, year?: string) {
   const now = new Date();
@@ -113,10 +112,7 @@ export default async function ExpensesPage({
                       {formatCurrency(Number(expense.amount))}
                     </TableCell>
                     <TableCell>
-                      <ConfirmDeleteButton
-                        onConfirm={deleteExpense.bind(null, expense.id)}
-                        description="Pengeluaran ini akan dihapus permanen."
-                      />
+                      <DeleteExpenseButton id={expense.id} />
                     </TableCell>
                   </TableRow>
                 ))}
