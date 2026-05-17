@@ -37,9 +37,11 @@ export function formatDateShort(date: string | Date | null | undefined): string 
 }
 
 export function getDaysDiff(from: string | Date, to: string | Date = new Date()): number {
-  const fromDate = new Date(from);
-  const toDate = new Date(to);
-  return Math.floor((toDate.getTime() - fromDate.getTime()) / 86400000);
+  // Date-only strings (YYYY-MM-DD) must be parsed as LOCAL midnight, not UTC midnight.
+  // Without "T00:00:00", JS parses them as UTC → shifts by -7h in WIB → returns -1 on same day.
+  const parseDate = (d: string | Date) =>
+    typeof d === "string" && d.length === 10 ? new Date(d + "T00:00:00") : new Date(d);
+  return Math.floor((parseDate(to).getTime() - parseDate(from).getTime()) / 86400000);
 }
 
 // Returns today's date as "YYYY-MM-DD" in the server's local timezone (WIB by default).

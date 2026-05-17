@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Egg, Bird, DollarSign, Syringe,
-  Brush, Tag, LogOut, Receipt, ShoppingCart, ChevronDown,
+  Brush, Tag, LogOut, Receipt, ShoppingCart, ChevronDown, Wheat, TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
@@ -23,6 +23,8 @@ const navItems = [
     ],
   },
   { href: "/categories", label: "Kategori", icon: Tag },
+  { href: "/feed", label: "Estimasi Pakan", icon: Wheat },
+  { href: "/strategy", label: "Strategi Profit", icon: TrendingUp },
   { href: "/vaccinations", label: "Vaksinasi", icon: Syringe },
   { href: "/cleaning", label: "Jadwal Kandang", icon: Brush },
 ];
