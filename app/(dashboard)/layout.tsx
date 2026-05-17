@@ -10,9 +10,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   let role: string | null = null;
   if (user) {
-    const admin = createAdminClient();
-    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single();
-    role = profile?.role ?? null;
+    try {
+      const admin = createAdminClient();
+      const { data: profile, error } = await admin.from("profiles").select("role").eq("id", user.id).single();
+      if (error) console.error("[layout] profiles query error:", error.message, "code:", error.code);
+      role = profile?.role ?? null;
+      console.log("[layout] user:", user.id, "role:", role);
+    } catch (err) {
+      console.error("[layout] admin client threw:", err);
+    }
   }
 
   return (
