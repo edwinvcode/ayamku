@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   return (
-    <form action={login} className="space-y-4">
+    <form action={login as any} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
