@@ -14,7 +14,7 @@ export default function LoginPage() {
           <CardDescription>Masuk ke sistem manajemen farm</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={async (fd) => { await login(fd); }} className="space-y-4">
+          <form action={login as any} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

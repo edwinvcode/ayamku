@@ -117,7 +117,7 @@ export default async function EggDetailPage({ params }: { params: { id: string }
           <CardContent className="space-y-4">
             <RecordHatchForm eggId={egg.id} maxQuantity={egg.quantity} />
             <div className="pt-2 border-t">
-              <form action={async () => { await markEggsFailed(egg.id); }}>
+              <form action={markEggsFailed.bind(null, egg.id) as any}>
                 <Button type="submit" variant="outline" size="sm"
                   className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:border-destructive">
                   Tandai Semua Gagal
