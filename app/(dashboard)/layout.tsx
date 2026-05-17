@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Header } from "@/components/layout/header";
@@ -9,7 +10,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   let role: string | null = null;
   if (user) {
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    const admin = createAdminClient();
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single();
     role = profile?.role ?? null;
   }
 

@@ -8,7 +8,8 @@ export async function getMyRole(): Promise<string | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const admin = createAdminClient();
+  const { data } = await admin.from("profiles").select("role").eq("id", user.id).single();
   return data?.role ?? null;
 }
 
