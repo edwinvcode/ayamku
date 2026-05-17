@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Egg, Bird, DollarSign, Syringe,
-  Brush, Tag, LogOut, Receipt, ShoppingCart, ChevronDown, Wheat, TrendingUp,
+  Brush, Tag, LogOut, Receipt, ShoppingCart, ChevronDown, Wheat, TrendingUp, Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
@@ -29,8 +29,13 @@ const navItems = [
   { href: "/cleaning", label: "Jadwal Kandang", icon: Brush },
 ];
 
-export function Sidebar() {
+export function Sidebar({ role }: { role?: string | null }) {
   const pathname = usePathname();
+
+  const allNavItems = [
+    ...navItems,
+    ...(role === "superadmin" ? [{ href: "/admin/users", label: "Pengguna", icon: Users }] : []),
+  ];
 
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-card border-r min-h-screen">
@@ -43,7 +48,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 

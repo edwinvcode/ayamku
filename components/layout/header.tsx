@@ -17,6 +17,7 @@ import {
   Receipt,
   ShoppingCart,
   ChevronDown,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
@@ -51,10 +52,15 @@ const navItems = [
   { href: "/cleaning", label: "Jadwal Kandang", icon: Brush },
 ];
 
-export function Header() {
+export function Header({ role }: { role?: string | null }) {
   const pathname = usePathname();
   const title = pageTitles[pathname] || "Ayamku";
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const allNavItems = [
+    ...navItems,
+    ...(role === "superadmin" ? [{ href: "/admin/users", label: "Pengguna", icon: Users }] : []),
+  ];
 
   return (
     <>
@@ -112,7 +118,7 @@ export function Header() {
             </div>
 
             <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-              {navItems.map((item) => {
+              {allNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 
