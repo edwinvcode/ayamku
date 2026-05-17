@@ -1,13 +1,27 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { login } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setError(null);
+    startTransition(async () => {
+      const result = await login(fd);
+      if (result?.error) setError(result.error);
+    });
+  }
+
   return (
-    <form action={login as any} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -28,8 +42,13 @@ export function LoginForm() {
           required
         />
       </div>
-      <Button type="submit" className="w-full">
-        Masuk
+      {error && (
+        <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+          {error}
+        </p>
+      )}
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending ? "Masuk..." : "Masuk"}
       </Button>
     </form>
   );
