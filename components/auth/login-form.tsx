@@ -23,12 +23,13 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="username">Username</Label>
         <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="peternak@farm.com"
+          id="username"
+          name="username"
+          type="text"
+          placeholder="admin"
+          autoComplete="username"
           required
         />
       </div>
@@ -39,6 +40,7 @@ export function LoginForm() {
           name="password"
           type="password"
           placeholder="••••••••"
+          autoComplete="current-password"
           required
         />
       </div>

@@ -1,23 +1,47 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { compare } from "bcryptjs";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createSession, deleteSession } from "@/lib/session";
 
 export async function login(formData: FormData) {
-  const supabase = createClient();
-
-  const email = formData.get("email") as string;
+  const username = (formData.get("username") as string)?.trim();
   const password = formData.get("password") as string;
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (!username || !password) {
+    return { error: "Username dan password wajib diisi" };
+  }
 
-  if (error) return { success: false, error: "Email atau password salah" };
+  const admin = createAdminClient();
+  const { data: user, error } = await admin
+    .from("app_users")
+    .select("*")
+    .eq("username", username)
+    .single();
 
-  redirect("/");
+  console.log("[login] username:", username, "found:", !!user, "db_error:", error?.message, "code:", error?.code);
+
+  if (error || !user) {
+    return { error: "Username atau password salah" };
+  }
+
+  const valid = await compare(password, user.password_hash);
+  if (!valid) {
+    return { error: "Username atau password salah" };
+  }
+
+  await createSession({
+    id: user.id,
+    username: user.username,
+    name: user.name,
+    role: user.role,
+  });
+
+  redirect("/dashboard");
 }
 
 export async function logout() {
-  const supabase = createClient();
-  await supabase.auth.signOut();
+  await deleteSession();
   redirect("/login");
 }

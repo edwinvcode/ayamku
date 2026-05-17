@@ -1,25 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession } from "@/lib/session";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Header } from "@/components/layout/header";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  let role: string | null = null;
-  if (user) {
-    try {
-      const admin = createAdminClient();
-      const { data: profile, error } = await admin.from("profiles").select("role").eq("id", user.id).single();
-      if (error) console.error("[layout] profiles query error:", error.message, "code:", error.code);
-      role = profile?.role ?? null;
-      console.log("[layout] user:", user.id, "role:", role);
-    } catch (err) {
-      console.error("[layout] admin client threw:", err);
-    }
-  }
+  const session = await getSession();
+  const role = session?.role ?? null;
 
   return (
     <div className="flex min-h-screen bg-background">

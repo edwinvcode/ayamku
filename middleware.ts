@@ -1,65 +1,43 @@
-import { createServerClient } from "@supabase/ssr";
+import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 
+const SECRET = new TextEncoder().encode(
+  process.env.SESSION_SECRET || "ayamku-default-secret-ganti-di-production"
+);
+const COOKIE_NAME = "ayamku-session";
+
 export async function middleware(request: NextRequest) {
-  // Demo mode: bypass auth completely
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
-    // Redirect /login ke /dashboard supaya ga nyangkut di halaman login
-    if (request.nextUrl.pathname.startsWith("/login")) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.next({ request });
+  const { pathname } = request.nextUrl;
+
+  const isAuthPage = pathname.startsWith("/login");
+  const isApiRoute = pathname.startsWith("/api");
+  const isStatic = pathname.startsWith("/_next") || pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/);
+
+  if (isStatic || isApiRoute) return NextResponse.next();
+
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  let isValid = false;
+
+  if (token) {
+    try {
+      await jwtVerify(token, SECRET);
+      isValid = true;
+    } catch {}
   }
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!isValid && !isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const isAuthPage = request.nextUrl.pathname.startsWith("/login");
-  const isApiRoute = request.nextUrl.pathname.startsWith("/api");
-
-  if (!user && !isAuthPage && !isApiRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  if (user && isAuthPage) {
+  if (isValid && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {

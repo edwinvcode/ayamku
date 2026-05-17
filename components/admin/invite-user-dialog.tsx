@@ -50,8 +50,8 @@ export function InviteUserDialog() {
             <Input id="name" name="name" placeholder="Nama pengguna" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" placeholder="email@farm.com" required />
+            <Label htmlFor="username">Username</Label>
+            <Input id="username" name="username" type="text" placeholder="username" required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>

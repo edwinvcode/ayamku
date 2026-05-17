@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getMyRole, getAllUsers } from "@/lib/actions/users";
+import { getSession } from "@/lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -8,14 +9,12 @@ import { ChangeRoleButton } from "@/components/admin/change-role-button";
 import { DeleteUserButton } from "@/components/admin/delete-user-button";
 import { formatDateShort } from "@/lib/utils";
 import { Users } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminUsersPage() {
   const role = await getMyRole();
   if (role !== "superadmin") redirect("/dashboard");
 
-  const supabase = createClient();
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  const session = await getSession();
 
   const { data: users, error } = await getAllUsers();
 
@@ -53,15 +52,15 @@ export default async function AdminUsersPage() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-sm">{user.name || "—"}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                        {user.id === currentUser?.id && (
+                        <p className="font-medium text-sm">{user.name || user.username}</p>
+                        <p className="text-xs text-muted-foreground font-mono">@{user.username}</p>
+                        {user.id === session?.id && (
                           <Badge variant="secondary" className="text-xs mt-0.5">Kamu</Badge>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      {user.id === currentUser?.id ? (
+                      {user.id === session?.id ? (
                         <Badge variant={user.role === "superadmin" ? "default" : "secondary"}>
                           {user.role === "superadmin" ? "Superadmin" : "Admin"}
                         </Badge>
@@ -73,7 +72,7 @@ export default async function AdminUsersPage() {
                       {formatDateShort(user.created_at)}
                     </TableCell>
                     <TableCell>
-                      {user.id !== currentUser?.id && (
+                      {user.id !== session?.id && (
                         <DeleteUserButton userId={user.id} />
                       )}
                     </TableCell>

@@ -1,23 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { hash } from "bcryptjs";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession } from "@/lib/session";
 
 export async function getMyRole(): Promise<string | null> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const admin = createAdminClient();
-  const { data } = await admin.from("profiles").select("role").eq("id", user.id).single();
-  return data?.role ?? null;
+  const session = await getSession();
+  return session?.role ?? null;
 }
 
 export async function getAllUsers() {
   const role = await getMyRole();
   if (role !== "superadmin") return { data: null, error: "Unauthorized" };
   const admin = createAdminClient();
-  const { data, error } = await admin.from("profiles").select("*").order("created_at", { ascending: true });
+  const { data, error } = await admin
+    .from("app_users")
+    .select("id, username, name, role, created_at")
+    .order("created_at", { ascending: true });
   return { data, error: error?.message ?? null };
 }
 
@@ -25,23 +25,21 @@ export async function createUser(formData: FormData) {
   const role = await getMyRole();
   if (role !== "superadmin") return { success: false, error: "Unauthorized" };
 
-  const email = formData.get("email") as string;
+  const username = (formData.get("username") as string)?.trim();
   const password = formData.get("password") as string;
-  const name = formData.get("name") as string;
+  const name = (formData.get("name") as string)?.trim() || null;
   const newRole = (formData.get("role") as string) || "admin";
 
-  if (!email || !password) return { success: false, error: "Email dan password wajib diisi" };
+  if (!username || !password) return { success: false, error: "Username dan password wajib diisi" };
   if (password.length < 6) return { success: false, error: "Password minimal 6 karakter" };
 
+  const password_hash = await hash(password, 10);
   const admin = createAdminClient();
-  const { data: authData, error: authError } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
-  if (authError) return { success: false, error: authError.message };
-
-  await admin.from("profiles").update({ name: name || null, role: newRole }).eq("id", authData.user.id);
+  const { error } = await admin.from("app_users").insert({ username, password_hash, name, role: newRole });
+  if (error) {
+    if (error.code === "23505") return { success: false, error: "Username sudah dipakai" };
+    return { success: false, error: error.message };
+  }
 
   revalidatePath("/admin/users");
   return { success: true };
@@ -51,7 +49,7 @@ export async function updateUserRole(userId: string, newRole: "superadmin" | "ad
   const role = await getMyRole();
   if (role !== "superadmin") return { success: false, error: "Unauthorized" };
   const admin = createAdminClient();
-  const { error } = await admin.from("profiles").update({ role: newRole }).eq("id", userId);
+  const { error } = await admin.from("app_users").update({ role: newRole }).eq("id", userId);
   if (error) return { success: false, error: error.message };
   revalidatePath("/admin/users");
   return { success: true };
@@ -61,13 +59,24 @@ export async function deleteUser(userId: string) {
   const role = await getMyRole();
   if (role !== "superadmin") return { success: false, error: "Unauthorized" };
 
-  // Prevent deleting yourself
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.id === userId) return { success: false, error: "Tidak bisa hapus akun sendiri" };
+  const session = await getSession();
+  if (session?.id === userId) return { success: false, error: "Tidak bisa hapus akun sendiri" };
 
   const admin = createAdminClient();
-  const { error } = await admin.auth.admin.deleteUser(userId);
+  const { error } = await admin.from("app_users").delete().eq("id", userId);
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
+export async function updatePassword(userId: string, newPassword: string) {
+  const role = await getMyRole();
+  if (role !== "superadmin") return { success: false, error: "Unauthorized" };
+  if (newPassword.length < 6) return { success: false, error: "Password minimal 6 karakter" };
+
+  const password_hash = await hash(newPassword, 10);
+  const admin = createAdminClient();
+  const { error } = await admin.from("app_users").update({ password_hash }).eq("id", userId);
   if (error) return { success: false, error: error.message };
   revalidatePath("/admin/users");
   return { success: true };
