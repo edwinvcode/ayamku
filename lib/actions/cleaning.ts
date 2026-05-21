@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession } from "@/lib/session";
 import { localDateStr } from "@/lib/utils";
 
 export async function addCleaningSchedule(formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const scheduled_date = formData.get("scheduled_date") as string;
   const cage_area = formData.get("cage_area") as string;
   const notes = formData.get("notes") as string;
@@ -18,7 +19,7 @@ export async function addCleaningSchedule(formData: FormData) {
     cage_area: cage_area || null,
     notes: notes || null,
     status: "pending",
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (error) return { success: false, error: error.message };
@@ -29,15 +30,14 @@ export async function addCleaningSchedule(formData: FormData) {
 }
 
 export async function markCleaningDone(id: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("cleaning_logs")
     .update({ status: "done", completed_date: localDateStr() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 
   if (error) return { success: false, error: error.message };
 
@@ -52,15 +52,14 @@ export async function markCleaningDoneAndSchedule(
   cageArea: string | null,
   notes: string | null,
 ) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { error: updateError } = await supabase
     .from("cleaning_logs")
     .update({ status: "done", completed_date: localDateStr() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 
   if (updateError) return { success: false, error: updateError.message };
 
@@ -70,7 +69,7 @@ export async function markCleaningDoneAndSchedule(
       cage_area: cageArea || null,
       notes: notes || null,
       status: "pending",
-      user_id: user.id,
+      user_id: session.id,
     });
     if (insertError) return { success: false, error: insertError.message };
   }
@@ -81,15 +80,11 @@ export async function markCleaningDoneAndSchedule(
 }
 
 export async function deleteCleaningLog(id: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabase
-    .from("cleaning_logs")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("cleaning_logs").delete().eq("id", id);
 
   if (error) return { success: false, error: error.message };
 

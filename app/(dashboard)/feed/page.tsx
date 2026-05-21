@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { FeedEstimateCard } from "@/components/chickens/feed-estimate-card";
 import { FeedScheduleCard } from "@/components/chickens/feed-schedule-card";
 import { FeedPriceEditor } from "@/components/feed/feed-price-editor";
 import { getFeedSettings } from "@/lib/actions/feed-settings";
 
 export default async function FeedPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const [{ data: batches }, overrides] = await Promise.all([
     supabase

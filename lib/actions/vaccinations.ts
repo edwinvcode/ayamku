@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession } from "@/lib/session";
 
 export async function addVaccination(formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const vaccine_type = formData.get("vaccine_type") as string;
   const date = formData.get("date") as string;
   const quantity = parseInt(formData.get("quantity") as string);
@@ -24,7 +25,7 @@ export async function addVaccination(formData: FormData) {
     dosage: dosage || null,
     notes: notes || null,
     next_due_date: next_due_date || null,
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (error) return { success: false, error: error.message };
@@ -35,10 +36,10 @@ export async function addVaccination(formData: FormData) {
 }
 
 export async function updateVaccination(id: string, formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const vaccine_type = formData.get("vaccine_type") as string;
   const date = formData.get("date") as string;
   const quantity = parseInt(formData.get("quantity") as string);
@@ -58,8 +59,7 @@ export async function updateVaccination(id: string, formData: FormData) {
       notes: notes || null,
       next_due_date: next_due_date || null,
     })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 
   if (error) return { success: false, error: error.message };
 
@@ -69,15 +69,11 @@ export async function updateVaccination(id: string, formData: FormData) {
 }
 
 export async function deleteVaccination(id: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabase
-    .from("vaccinations")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("vaccinations").delete().eq("id", id);
 
   if (error) return { success: false, error: error.message };
 

@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DashboardAlert, DashboardKPIs } from "@/types/database";
 import { getDaysDiff, localDateStr } from "@/lib/utils";
 import { getBatchAgeDays } from "@/lib/lifecycle";
 
 export async function getDashboardKPIs(): Promise<DashboardKPIs> {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const today = localDateStr();
   const firstOfMonth = localDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -13,21 +13,9 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
     supabase.from("eggs").select("quantity").eq("status", "stock"),
     supabase.from("eggs").select("quantity").eq("status", "incubating"),
     supabase.from("chicken_batches").select("stage, quantity, breeder_gender, stage_since").neq("stage", "harvested"),
-    supabase
-      .from("expenses")
-      .select("amount")
-      .gte("date", firstOfMonth)
-      .lte("date", today),
-    supabase
-      .from("sales")
-      .select("total_revenue, quantity, price_per_unit")
-      .gte("date", firstOfMonth)
-      .lte("date", today),
-    supabase
-      .from("mortality_logs")
-      .select("count")
-      .gte("date", firstOfMonth)
-      .lte("date", today),
+    supabase.from("expenses").select("amount").gte("date", firstOfMonth).lte("date", today),
+    supabase.from("sales").select("total_revenue, quantity, price_per_unit").gte("date", firstOfMonth).lte("date", today),
+    supabase.from("mortality_logs").select("count").gte("date", firstOfMonth).lte("date", today),
   ]);
 
   const sumQty = (data: { quantity: number }[] | null) =>
@@ -61,7 +49,7 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
 }
 
 export async function getDashboardAlerts(): Promise<DashboardAlert[]> {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const alerts: DashboardAlert[] = [];
   const today = new Date();
   const todayStr = localDateStr(today);
@@ -69,25 +57,10 @@ export async function getDashboardAlerts(): Promise<DashboardAlert[]> {
   const in3Days = localDateStr(new Date(today.getTime() + 3 * 86400000));
 
   const [incubating, batches, vaccinations, cleaning] = await Promise.all([
-    supabase
-      .from("eggs")
-      .select("id, quantity, expected_hatch_date")
-      .eq("status", "incubating")
-      .lte("expected_hatch_date", in3Days),
-    supabase
-      .from("chicken_batches")
-      .select("id, batch_code, stage, hatch_date, stage_since, quantity")
-      .in("stage", ["starter", "grower"]),
-    supabase
-      .from("vaccinations")
-      .select("id, vaccine_type, next_due_date, batch_id")
-      .lte("next_due_date", in7Days)
-      .gte("next_due_date", todayStr),
-    supabase
-      .from("cleaning_logs")
-      .select("id, scheduled_date, cage_area")
-      .eq("status", "pending")
-      .lte("scheduled_date", todayStr),
+    supabase.from("eggs").select("id, quantity, expected_hatch_date").eq("status", "incubating").lte("expected_hatch_date", in3Days),
+    supabase.from("chicken_batches").select("id, batch_code, stage, hatch_date, stage_since, quantity").in("stage", ["starter", "grower"]),
+    supabase.from("vaccinations").select("id, vaccine_type, next_due_date, batch_id").lte("next_due_date", in7Days).gte("next_due_date", todayStr),
+    supabase.from("cleaning_logs").select("id, scheduled_date, cage_area").eq("status", "pending").lte("scheduled_date", todayStr),
   ]);
 
   for (const egg of incubating.data || []) {

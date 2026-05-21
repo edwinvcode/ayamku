@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { MarkDoneButton } from "@/components/cleaning/mark-done-button";
 import { DeleteCleaningLogButton } from "@/components/cleaning/delete-cleaning-log-button";
 
 export default async function CleaningPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: logs } = await supabase
     .from("cleaning_logs")
     .select("*")

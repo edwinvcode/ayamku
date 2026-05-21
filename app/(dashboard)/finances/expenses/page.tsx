@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ export default async function ExpensesPage({
 }: {
   searchParams: { month?: string; year?: string };
 }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { month, year } = searchParams;
   const { from, to } = getDateRange(month, year);
 

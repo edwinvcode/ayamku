@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { calcBatchStrategy, calcPortfolioSummary } from "@/lib/strategy";
 import { getSellSettings } from "@/lib/actions/sell-settings";
 import { PortfolioSummaryCard } from "@/components/strategy/portfolio-summary-card";
@@ -9,7 +9,7 @@ import { TrendingUp } from "lucide-react";
 const PRIORITY_ORDER = { jual: 0, transisi: 1, tunggu: 2, pertahankan: 3 };
 
 export default async function StrategyPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const [{ data: batches }, { data: sales }, sellOverrides] = await Promise.all([
     supabase.from("chicken_batches").select("*").neq("stage", "harvested").order("created_at", { ascending: false }),

@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession } from "@/lib/session";
 import { ExpenseCategory } from "@/types/database";
 
 export async function addExpense(formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const amount = parseFloat(formData.get("amount") as string);
   const category = formData.get("category") as ExpenseCategory;
   const date = formData.get("date") as string;
@@ -25,7 +26,7 @@ export async function addExpense(formData: FormData) {
     sub_category: sub_category || null,
     description: description || null,
     quantity_kg: isNaN(quantity_kg) ? null : quantity_kg,
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (error) return { success: false, error: error.message };
@@ -37,15 +38,11 @@ export async function addExpense(formData: FormData) {
 }
 
 export async function deleteExpense(id: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabase
-    .from("expenses")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("expenses").delete().eq("id", id);
 
   if (error) return { success: false, error: error.message };
 

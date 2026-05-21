@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession } from "@/lib/session";
 
 export async function recordSale(formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const quantity = parseInt(formData.get("quantity") as string);
   const price_per_unit = parseFloat(formData.get("price_per_unit") as string);
   const date = formData.get("date") as string;
@@ -26,7 +27,7 @@ export async function recordSale(formData: FormData) {
     sale_type,
     batch_id: batch_id || null,
     notes: notes || null,
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (error) return { success: false, error: error.message };
@@ -38,15 +39,11 @@ export async function recordSale(formData: FormData) {
 }
 
 export async function deleteSale(id: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabase
-    .from("sales")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("sales").delete().eq("id", id);
 
   if (error) return { success: false, error: error.message };
 

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,7 +10,7 @@ import { EditVaccinationButton } from "@/components/vaccinations/edit-vaccinatio
 import { DeleteVaccinationButton } from "@/components/vaccinations/delete-vaccination-button";
 
 export default async function VaccinationsPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const [{ data: vaccinations }, { data: batches }] = await Promise.all([
     supabase
       .from("vaccinations")

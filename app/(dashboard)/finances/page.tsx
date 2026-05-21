@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export default async function FinancesPage({
 }: {
   searchParams: { month?: string; year?: string };
 }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { month, year } = searchParams;
   const { from, to } = getDateRange(month, year);
   const now = new Date();

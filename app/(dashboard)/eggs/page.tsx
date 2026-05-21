@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { EggForm } from "@/components/eggs/egg-form";
 import { EggStatusBadge } from "@/components/eggs/egg-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { SellEggForm } from "@/components/eggs/sell-egg-form";
 import Link from "next/link";
 
 export default async function EggsPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: eggs } = await supabase
     .from("eggs")
     .select("*")

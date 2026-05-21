@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function getCategories() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from("expense_categories")
     .select("*")
