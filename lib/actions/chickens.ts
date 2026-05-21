@@ -1,18 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession } from "@/lib/session";
 import { ChickenStage } from "@/types/database";
 import { generateBatchCode, localDateStr } from "@/lib/utils";
 
 export async function createBatch(formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const quantity = parseInt(formData.get("quantity") as string);
   const hatch_date = formData.get("hatch_date") as string;
-  const stage = (formData.get("stage") as ChickenStage) || "doc";
+  const stage = (formData.get("stage") as ChickenStage) || "starter";
   const notes = formData.get("notes") as string;
   const batch_code = formData.get("batch_code") as string || generateBatchCode();
   const breeder_gender = formData.get("breeder_gender") as string || null;
@@ -25,7 +26,7 @@ export async function createBatch(formData: FormData) {
     stage_since: localDateStr(),
     breeder_gender: stage === "indukan" ? breeder_gender : null,
     notes: notes || null,
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (error) return { success: false, error: error.message };
@@ -36,15 +37,14 @@ export async function createBatch(formData: FormData) {
 }
 
 export async function recordMortality(batchId: string, count: number, reason: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { data: batch } = await supabase
     .from("chicken_batches")
     .select("quantity")
     .eq("id", batchId)
-    .eq("user_id", user.id)
     .single();
 
   if (!batch) return { success: false, error: "Batch tidak ditemukan" };
@@ -55,7 +55,7 @@ export async function recordMortality(batchId: string, count: number, reason: st
     count,
     reason: reason || null,
     date: localDateStr(),
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (logError) return { success: false, error: logError.message };
@@ -63,8 +63,7 @@ export async function recordMortality(batchId: string, count: number, reason: st
   const { error: updateError } = await supabase
     .from("chicken_batches")
     .update({ quantity: batch.quantity - count })
-    .eq("id", batchId)
-    .eq("user_id", user.id);
+    .eq("id", batchId);
 
   if (updateError) return { success: false, error: updateError.message };
 
@@ -74,15 +73,14 @@ export async function recordMortality(batchId: string, count: number, reason: st
 }
 
 export async function transitionStage(batchId: string, toStage: ChickenStage, notes?: string, breederGender?: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { data: batch } = await supabase
     .from("chicken_batches")
     .select("stage")
     .eq("id", batchId)
-    .eq("user_id", user.id)
     .single();
 
   if (!batch) return { success: false, error: "Batch tidak ditemukan" };
@@ -104,8 +102,7 @@ export async function transitionStage(batchId: string, toStage: ChickenStage, no
   const { error } = await supabase
     .from("chicken_batches")
     .update(updatePayload)
-    .eq("id", batchId)
-    .eq("user_id", user.id);
+    .eq("id", batchId);
 
   if (error) return { success: false, error: error.message };
 
@@ -123,15 +120,14 @@ export async function makeBreeder(batchId: string) {
 }
 
 export async function moveIndukanToAfkir(batchId: string, quantity: number) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { data: batch } = await supabase
     .from("chicken_batches")
     .select("*")
     .eq("id", batchId)
-    .eq("user_id", user.id)
     .single();
 
   if (!batch) return { success: false, error: "Batch tidak ditemukan" };
@@ -142,10 +138,10 @@ export async function moveIndukanToAfkir(batchId: string, quantity: number) {
   const remaining = batch.quantity - quantity;
 
   if (remaining === 0) {
-    const { error } = await supabase.from("chicken_batches").delete().eq("id", batchId).eq("user_id", user.id);
+    const { error } = await supabase.from("chicken_batches").delete().eq("id", batchId);
     if (error) return { success: false, error: error.message };
   } else {
-    const { error } = await supabase.from("chicken_batches").update({ quantity: remaining }).eq("id", batchId).eq("user_id", user.id);
+    const { error } = await supabase.from("chicken_batches").update({ quantity: remaining }).eq("id", batchId);
     if (error) return { success: false, error: error.message };
   }
 
@@ -157,7 +153,7 @@ export async function moveIndukanToAfkir(batchId: string, quantity: number) {
     stage_since: today,
     source_egg_id: batch.source_egg_id,
     breeder_gender: batch.breeder_gender,
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (error) return { success: false, error: error.message };
@@ -168,15 +164,14 @@ export async function moveIndukanToAfkir(batchId: string, quantity: number) {
 }
 
 export async function moveLayerToIndukan(batchId: string, betina: number, jantan: number) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { data: batch } = await supabase
     .from("chicken_batches")
     .select("*")
     .eq("id", batchId)
-    .eq("user_id", user.id)
     .single();
 
   if (!batch) return { success: false, error: "Batch tidak ditemukan" };
@@ -190,17 +185,17 @@ export async function moveLayerToIndukan(batchId: string, betina: number, jantan
 
   // Kurangi / hapus batch Layer
   if (remaining === 0) {
-    const { error } = await supabase.from("chicken_batches").delete().eq("id", batchId).eq("user_id", user.id);
+    const { error } = await supabase.from("chicken_batches").delete().eq("id", batchId);
     if (error) return { success: false, error: error.message };
   } else {
-    const { error } = await supabase.from("chicken_batches").update({ quantity: remaining }).eq("id", batchId).eq("user_id", user.id);
+    const { error } = await supabase.from("chicken_batches").update({ quantity: remaining }).eq("id", batchId);
     if (error) return { success: false, error: error.message };
   }
 
   // Buat batch Indukan
   const inserts: Record<string, unknown>[] = [];
-  if (betina > 0) inserts.push({ batch_code: generateBatchCode(), stage: "indukan", quantity: betina, hatch_date: batch.hatch_date, stage_since: today, breeder_gender: "betina", source_egg_id: batch.source_egg_id, user_id: user.id });
-  if (jantan > 0) inserts.push({ batch_code: generateBatchCode(), stage: "indukan", quantity: jantan, hatch_date: batch.hatch_date, stage_since: today, breeder_gender: "jantan", source_egg_id: batch.source_egg_id, user_id: user.id });
+  if (betina > 0) inserts.push({ batch_code: generateBatchCode(), stage: "indukan", quantity: betina, hatch_date: batch.hatch_date, stage_since: today, breeder_gender: "betina", source_egg_id: batch.source_egg_id, user_id: session.id });
+  if (jantan > 0) inserts.push({ batch_code: generateBatchCode(), stage: "indukan", quantity: jantan, hatch_date: batch.hatch_date, stage_since: today, breeder_gender: "jantan", source_egg_id: batch.source_egg_id, user_id: session.id });
 
   if (inserts.length > 0) {
     const { error } = await supabase.from("chicken_batches").insert(inserts);
@@ -218,15 +213,14 @@ export async function splitLayerBatch(
   indukanBetina: number,
   indukanJantan: number,
 ) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { data: batch } = await supabase
     .from("chicken_batches")
     .select("*")
     .eq("id", batchId)
-    .eq("user_id", user.id)
     .single();
 
   if (!batch) return { success: false, error: "Batch tidak ditemukan" };
@@ -241,8 +235,7 @@ export async function splitLayerBatch(
   const { error: delError } = await supabase
     .from("chicken_batches")
     .delete()
-    .eq("id", batchId)
-    .eq("user_id", user.id);
+    .eq("id", batchId);
 
   if (delError) return { success: false, error: delError.message };
 
@@ -256,7 +249,7 @@ export async function splitLayerBatch(
       stage_since: today,
       source_egg_id: batch.source_egg_id,
       notes: batch.notes,
-      user_id: user.id,
+      user_id: session.id,
     });
   }
   if (indukanBetina > 0) {
@@ -268,7 +261,7 @@ export async function splitLayerBatch(
       stage_since: today,
       source_egg_id: batch.source_egg_id,
       breeder_gender: "betina",
-      user_id: user.id,
+      user_id: session.id,
     });
   }
   if (indukanJantan > 0) {
@@ -280,7 +273,7 @@ export async function splitLayerBatch(
       stage_since: today,
       source_egg_id: batch.source_egg_id,
       breeder_gender: "jantan",
-      user_id: user.id,
+      user_id: session.id,
     });
   }
 
@@ -295,10 +288,10 @@ export async function splitLayerBatch(
 }
 
 export async function sellChickens(batchId: string, formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const quantity = parseInt(formData.get("quantity") as string);
   const price_per_unit = parseFloat(formData.get("price_per_unit") as string);
   const date = formData.get("date") as string;
@@ -311,7 +304,6 @@ export async function sellChickens(batchId: string, formData: FormData) {
     .from("chicken_batches")
     .select("quantity")
     .eq("id", batchId)
-    .eq("user_id", user.id)
     .single();
 
   if (!batch) return { success: false, error: "Batch tidak ditemukan" };
@@ -325,7 +317,7 @@ export async function sellChickens(batchId: string, formData: FormData) {
     sale_type: "chicken",
     batch_id: batchId,
     notes: notes || null,
-    user_id: user.id,
+    user_id: session.id,
   });
 
   if (saleError) return { success: false, error: saleError.message };
@@ -335,15 +327,13 @@ export async function sellChickens(batchId: string, formData: FormData) {
     const { error: updateErr } = await supabase
       .from("chicken_batches")
       .update({ stage: "harvested" })
-      .eq("id", batchId)
-      .eq("user_id", user.id);
+      .eq("id", batchId);
     if (updateErr) return { success: false, error: updateErr.message };
   } else {
     const { error: updateErr } = await supabase
       .from("chicken_batches")
       .update({ quantity: remaining })
-      .eq("id", batchId)
-      .eq("user_id", user.id);
+      .eq("id", batchId);
     if (updateErr) return { success: false, error: updateErr.message };
   }
 
@@ -354,15 +344,14 @@ export async function sellChickens(batchId: string, formData: FormData) {
 }
 
 export async function deleteBatch(batchId: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
 
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("chicken_batches")
     .delete()
-    .eq("id", batchId)
-    .eq("user_id", user.id);
+    .eq("id", batchId);
 
   if (error) return { success: false, error: error.message };
 

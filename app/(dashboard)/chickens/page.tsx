@@ -1,5 +1,5 @@
 import React from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { Bird } from "lucide-react";
 const stageOrder: ChickenStage[] = ["starter", "grower", "layer", "afkir", "indukan", "harvested"];
 
 export default async function ChickensPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const now = new Date();
   const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 

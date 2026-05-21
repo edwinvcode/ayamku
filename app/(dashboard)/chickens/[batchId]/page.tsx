@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function BatchDetailPage({ params }: { params: { batchId: string } }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const [{ data: batch }, { data: mortalityLogs }, { data: transitions }] = await Promise.all([
     supabase.from("chicken_batches").select("*").eq("id", params.batchId).single(),
     supabase.from("mortality_logs").select("*").eq("batch_id", params.batchId).order("date", { ascending: false }),
