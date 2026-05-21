@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/session";
 import { ChickenStage } from "@/types/database";
@@ -136,8 +137,9 @@ export async function moveIndukanToAfkir(batchId: string, quantity: number) {
 
   const today = localDateStr();
   const remaining = batch.quantity - quantity;
+  const isLastBatch = remaining === 0;
 
-  if (remaining === 0) {
+  if (isLastBatch) {
     const { error } = await supabase.from("chicken_batches").delete().eq("id", batchId);
     if (error) return { success: false, error: error.message };
   } else {
@@ -160,6 +162,7 @@ export async function moveIndukanToAfkir(batchId: string, quantity: number) {
 
   revalidatePath("/chickens");
   revalidatePath("/");
+  if (isLastBatch) redirect("/chickens");
   return { success: true };
 }
 
